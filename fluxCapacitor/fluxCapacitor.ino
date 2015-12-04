@@ -19,6 +19,7 @@ typedef enum {
   MODE_GREEN = 2,
   MODE_BLUE = 3,
   MODE_RANDOM = 4,
+  MODE_RANDOM_HOLD = 5,
   MODE_DONE
 } modes_t;
 
@@ -88,20 +89,20 @@ void loop() {
     }
 
     case MODE_RANDOM: {
-      //if(pos == (NUM_LEDS - 1)) {
-        for(int color = 0; color < 3; color++) {
-          int tmpColor = rndColors[color];
-          tmpColor += random(0, val/8) - val/16;
-          if(tmpColor < 0) {
-            rndColors[color] = 0;
-          } else if(tmpColor > val) {
-            rndColors[color] = val;
-          } else {
-            rndColors[color] = tmpColor;
-          }
+      if(pos == (NUM_LEDS - 1)) {
+        int maxVal = (val * 15)/10;
+        if(maxVal > 255) {
+          maxVal = 255;
         }
-      //}
+        rndColors[0] = random(0, val);
+        rndColors[1] = random(0, val - rndColors[0]);
+        rndColors[2] = val - rndColors[0] - rndColors[1];
+      }
       
+      // Not breaking here on purpose!
+    }
+
+    case MODE_RANDOM_HOLD: {
       leds[pos].r = rndColors[0];
       leds[pos].g = rndColors[1];
       leds[pos].b = rndColors[2];
