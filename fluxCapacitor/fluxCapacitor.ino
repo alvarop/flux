@@ -10,8 +10,8 @@
 
 CRGB leds[NUM_LEDS];
 
-int32_t pos = NUM_LEDS - 1;
-int32_t pos_inc = -1;
+int32_t pos = NUM_LEDS - 1; // Start at the end of the strip
+int32_t pos_inc = -1; // Move backwards
 
 typedef enum {
   MODE_FLUXING = 0,
@@ -26,10 +26,11 @@ typedef enum {
 void setup() {
 	// sanity check delay - allows reprogramming if accidently blowing power w/leds
    	delay(2000);
-    //Serial.begin(38400);
+
     FastLED.addLeds<NEOPIXEL, DATA_PIN>(leds, NUM_LEDS);
     randomSeed(analogRead(0));
-    pinMode(19, INPUT_PULLUP);
+    
+    pinMode(19, INPUT_PULLUP); // For pushbutton
 }
 
 int val = 0;
@@ -39,6 +40,8 @@ int oldButtonVal = 1;
 uint8_t rndColors[3] = {0, 0, 0};
 
 void loop() {
+
+  // Update LED color values
   for(uint32_t led = 0; led < NUM_LEDS; led++) {
     int fadeRate = val >> 2;
     if(leds[led].r >= fadeRate) {
@@ -60,8 +63,10 @@ void loop() {
     }
   }
 
+  // Send colors out to LED strips
   FastLED.show();
 
+  // Read potentiometer voltage so we can control speed and brightness
   val = analogRead(6) >> 2;
   timeDelay = analogRead(7) >> 4;
 
@@ -94,6 +99,9 @@ void loop() {
         if(maxVal > 255) {
           maxVal = 255;
         }
+
+        // Make sure the sum of all pixel values is val
+        // This way we don't get dark colors
         rndColors[0] = random(0, val);
         rndColors[1] = random(0, val - rndColors[0]);
         rndColors[2] = val - rndColors[0] - rndColors[1];
@@ -103,6 +111,7 @@ void loop() {
     }
 
     case MODE_RANDOM_HOLD: {
+      // Set the randomly selected color      
       leds[pos].r = rndColors[0];
       leds[pos].g = rndColors[1];
       leds[pos].b = rndColors[2];
@@ -114,7 +123,8 @@ void loop() {
       break;
     }
   }
-  
+
+  // Move the position of the 'active' LED  
   pos += pos_inc;
 
   if(pos < 0) {
@@ -122,9 +132,12 @@ void loop() {
   }
   
   int buttonVal = digitalRead(19);
-  
+
+  // Cheap debounce (and only one action per click)
   if((buttonVal == 0) && (oldButtonVal == 1)) {
-    mode++;
+    
+    mode++; // Go to next mode
+    
     if(mode >= MODE_DONE) {
       mode = MODE_FLUXING;
     }
@@ -139,5 +152,6 @@ void loop() {
   
   oldButtonVal = buttonVal;
 
+  // Control speed here
   delay(timeDelay);
 }
